@@ -108,7 +108,7 @@ namespace Steal365
                 }
                 else
                 {
-                    Console.WriteLine("[+] Dump " + p + "ok");
+                    Console.WriteLine("[+] Dump " + p + " ok");
                     Console.WriteLine("  \\-- Looking for tokens...");
 
                     var tokens = GetTokens();
