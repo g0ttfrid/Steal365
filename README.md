@@ -1,25 +1,39 @@
 # Steal365
-Dumping tokens from Microsoft Office desktop applications’ memory
+Dumping tokens from Microsoft Office desktop application's memory
 
 ### Run
 ```
-PS C:\Users\IEUser> .\Steal365.ps1
-[!] WINWORD
-[+] Dump ONENOTE ok
-  \-- Looking for tokens...
+PS C:\User\dev> .\Steal365.exe
+
+      --++[   Steal365   ]++--
+
+[>] try dump: WINWORD
+    - WINWORD not found!
+
+[>] try dump: onenoteim
+  \-- dump onenoteim ok
+  \-- looking for tokens...
     + Valid token: 15/09/1995 02:25:02
     + aud: https://outlook.office365.com/
     + Token: eyJ0eX[...]uE4w
 
-[!] POWERPNT
-[+] Dump OUTLOOK ok
-  \-- Looking for tokens...
+[>] try dump: ONENOTEM
+    - ONENOTEM not found!
+
+[>] try dump: POWERPNT
+    - POWERPNT not found!
+
+[>] try dump: OUTLOOK
+  \-- dump OUTLOOK ok
     + Valid token: 15/09/1995 02:26:41
     + aud: https://outlook.office365.com/
     + Token: eyJ0eX[...]nORg
 
-[!] EXCEL
-[+] Dump OneDrive ok
+[>] try dump: EXCEL
+    - EXCEL not found!
+
+[>] try dump: OneDrive
+  \-- dump OneDrive ok
   \-- Looking for tokens...
     + Valid token: 15/09/1995 02:25:17
     + aud: 00000003-0000-0000-c000-000000000000
