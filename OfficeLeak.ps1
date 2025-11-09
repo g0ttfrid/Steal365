@@ -20,21 +20,20 @@ $Edge = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, li
 $IE = 'Mozilla/5.0 (Windows NT 10.0; WOW64; Trident/7.0; rv:11.0) like Gecko'
 
 $searchDefault = @{
-    "Password" = "Password\:"
+    #"Password" = "Password\:"
     #"Generic Password" = "password OR pass OR senha"
     #"Creds" = "credentials OR credenciais"
-    #"Git Tokens" = """ghp_"" OR ""gho_"" OR ""ghu_"" OR ""ghs_"" OR ""ghr_"""
-    #"AWS" = "AWS_ACCESS_KEY_ID OR AWS_SECRET_ACCESS_KEY OR (secret AND aws)"
-    #"Private Keys" = """BEGIN RSA PRIVATE KEY"" OR ""BEGIN DSA PRIVATE KEY"" OR ""BEGIN EC PRIVATE KEY"""
-    #"Postman" = "PMAK\-"
-    #"Terraform" = "typeform"
+    "Git Tokens" = """ghp_"" OR ""gho_"" OR ""ghu_"" OR ""ghs_"" OR ""ghr_"""
+    "AWS" = "AWS_ACCESS_KEY_ID OR AWS_SECRET_ACCESS_KEY OR (secret AND aws)"
+    "Private Keys" = """BEGIN RSA PRIVATE KEY"" OR ""BEGIN DSA PRIVATE KEY"" OR ""BEGIN EC PRIVATE KEY"""
+    "Postman" = "PMAK\-"
+    "Terraform" = "typeform"
     }
 
 $searchOnlySharepoint = @{
-    #"POC" = "(filetype:docx OR filetype:xlsx) AND ('ghp_' OR 'jenkins')"
-    #"Git File Credentials" = "filetype:.git-credentials"
-    #"Jenkins" = "filename:credentials.xml OR filename:jenkins.plugins.publish_over_ssh.BapSshPublisherPlugin.xml"
-    #"IAAS" = "(filetype:tf OR filetype:tfstate OR filetype:tfstate.backup OR filetype:tfplan OR filetype:yaml OR filetype:jinja OR filetype:yml OR filetype:pp OR filetype:bicep OR filetype:hot)"
+    "Git File Credentials" = "filetype:.git-credentials"
+    "Jenkins" = "filename:credentials.xml OR filename:jenkins.plugins.publish_over_ssh.BapSshPublisherPlugin.xml"
+    "IAAS" = "(filetype:tf OR filetype:tfstate OR filetype:tfstate.backup OR filetype:tfplan OR filetype:yaml OR filetype:jinja OR filetype:yml OR filetype:pp OR filetype:bicep OR filetype:hot)"
 }
 
 function DecodeJwtPayload {
